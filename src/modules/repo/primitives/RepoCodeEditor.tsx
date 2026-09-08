@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { repoApi } from '../storage/api';
+import React, { useState } from 'react';
 import { useAuth } from '../../auth';
 import { dispatcher } from '../../../core/dispatcher';
+import { useCodeEditor } from '../logic/useCodeEditor';
 import { EditorActionBar } from './EditorActionBar';
 import { runPreCommitTests, PreCommitReport, PreCommitTestModal } from '../../tester';
+import { usePeerReview, PeerReviewModal, PeerReviewFinding } from '../../peerReview';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 
 interface RepoCodeEditorProps {
@@ -15,47 +16,29 @@ interface RepoCodeEditorProps {
 
 export function RepoCodeEditor({ repoFullName, filePath, isNewFile, onBack }: RepoCodeEditorProps) {
   const { token } = useAuth();
-  const [content, setContent] = useState('');
-  const [sha, setSha] = useState('');
-  const [commitMsg, setCommitMsg] = useState(isNewFile ? `Create ${filePath}` : `Update ${filePath}`);
-  const [loading, setLoading] = useState(!isNewFile);
-  const [pushing, setPushing] = useState(false);
-  const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const [errorText, setErrorText] = useState('');
-  const [commitUrl, setCommitUrl] = useState('');
-  const [testReport, setTestReport] = useState<PreCommitReport | null>(null);
+  const { content, setContent, commitMsg, setCommitMsg, loading, pushing, status, errorText, commitUrl, executeCommit } =
+    useCodeEditor(repoFullName, filePath, isNewFile, token);
 
-  useEffect(() => {
-    if (isNewFile || !token) { setLoading(false); return; }
-    setLoading(true);
-    repoApi.fetchFileContent(repoFullName, filePath, token)
-      .then((res) => { setContent(res.content); setSha(res.sha); })
-      .catch((err) => setErrorText(err.message || 'Gagal memuat berkas'))
-      .finally(() => setLoading(false));
-  }, [repoFullName, filePath, token, isNewFile]);
+  const [testReport, setTestReport] = useState<PreCommitReport | null>(null);
+  const { report: reviewReport, reviewing, reviewFileCode, clearReport: clearReviewReport } = usePeerReview(repoFullName);
 
   const handlePreCommit = () => {
     if (!token) return;
-    const rep = runPreCommitTests([{ path: filePath, content }]);
-    setTestReport(rep);
+    setTestReport(runPreCommitTests([{ path: filePath, content }]));
   };
 
-  const executePush = async () => {
-    setTestReport(null);
-    setPushing(true);
-    setStatus('idle');
-    try {
-      const res = await repoApi.commitFile(repoFullName, filePath, content, commitMsg, token, sha || undefined);
-      setStatus('success');
-      setCommitUrl(res?.commit?.html_url || '');
-      if (res?.content?.sha) setSha(res.content.sha);
-      dispatcher.emit('repo:commit_pushed', { repoFullName, filePath });
-    } catch (err: any) {
-      setStatus('error');
-      setErrorText(err.message || 'Gagal melakukan commit/push.');
-    } finally {
-      setPushing(false);
+  const handleApplyFix = (finding: PeerReviewFinding) => {
+    if (finding.snippet && finding.suggestion) {
+      const prompt = `Berikut file "${filePath}":\n\`\`\`\n${content}\n\`\`\`\nMohon perbaiki masalah "${finding.title}": ${finding.suggestion} pada bagian:\n\`\`\`\n${finding.snippet}\n\`\`\`\nKirimkan kode perbaikan lengkap.`;
+      dispatcher.emit('ai:send_prompt', { prompt });
+      clearReviewReport();
     }
+  };
+
+  const handleConfirmPush = async () => {
+    setTestReport(null);
+    clearReviewReport();
+    await executeCommit();
   };
 
   const handleAskAi = () => {
@@ -94,7 +77,9 @@ export function RepoCodeEditor({ repoFullName, filePath, isNewFile, onBack }: Re
         commitMsg={commitMsg}
         setCommitMsg={setCommitMsg}
         onAskAi={handleAskAi}
+        onPeerReview={() => reviewFileCode(filePath, content)}
         onPush={handlePreCommit}
+        reviewing={reviewing}
         pushing={pushing}
         status={status}
         errorText={errorText}
@@ -102,7 +87,11 @@ export function RepoCodeEditor({ repoFullName, filePath, isNewFile, onBack }: Re
       />
 
       {testReport && (
-        <PreCommitTestModal report={testReport} fileCount={1} onConfirmPush={executePush} onCancel={() => setTestReport(null)} />
+        <PreCommitTestModal report={testReport} fileCount={1} onConfirmPush={handleConfirmPush} onCancel={() => setTestReport(null)} />
+      )}
+
+      {reviewReport && (
+        <PeerReviewModal report={reviewReport} onClose={clearReviewReport} onProceedAnyway={handlePreCommit} onApplyFix={handleApplyFix} />
       )}
     </div>
   );

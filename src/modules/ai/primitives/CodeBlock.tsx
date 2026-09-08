@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, Terminal } from 'lucide-react';
 
 interface CodeBlockProps {
   language: string;
@@ -20,14 +20,17 @@ export function CodeBlock({ language, code }: CodeBlockProps) {
   };
 
   return (
-    <div className="my-2.5 rounded-lg border border-zinc-750 overflow-hidden bg-zinc-950 text-zinc-100 flex flex-col font-mono">
+    <div className="my-2.5 rounded-lg border border-zinc-800 overflow-hidden bg-zinc-950 text-zinc-100 flex flex-col font-mono shadow-xs">
       {/* Code Header */}
       <div className="flex items-center justify-between px-3 py-1.5 bg-zinc-900 border-b border-zinc-800 text-[10px] text-zinc-400 font-semibold select-none">
-        <span className="uppercase tracking-wider">{language || 'code'}</span>
+        <div className="flex items-center gap-1.5">
+          <Terminal className="w-3 h-3 text-purple-400" />
+          <span className="uppercase tracking-wider font-bold text-zinc-300">{language || 'code'}</span>
+        </div>
         <button
           type="button"
           onClick={handleCopy}
-          className="flex items-center gap-1 hover:text-white transition-colors duration-150 cursor-pointer"
+          className="flex items-center gap-1 px-1.5 py-0.5 rounded text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors duration-150 cursor-pointer"
         >
           {copied ? (
             <>
@@ -44,7 +47,7 @@ export function CodeBlock({ language, code }: CodeBlockProps) {
       </div>
 
       {/* Code Content */}
-      <pre className="p-3 text-[11px] leading-relaxed overflow-x-auto select-text font-mono max-h-[220px] whitespace-pre">
+      <pre className="p-3 text-[11px] leading-relaxed overflow-x-auto select-text font-mono max-h-[260px] whitespace-pre text-zinc-200">
         <code>{code.trim()}</code>
       </pre>
     </div>

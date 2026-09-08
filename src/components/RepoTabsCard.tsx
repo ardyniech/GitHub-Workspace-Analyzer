@@ -3,17 +3,19 @@ import { Card } from '../shared/atoms/Card';
 import { RepoFilesTab } from '../modules/repo';
 import { IssueList } from '../modules/issue';
 import { PrList } from '../modules/pr';
-import { FolderCode, AlertCircle, GitPullRequest } from 'lucide-react';
+import { ManifestSecurityCard } from '../modules/security';
+import { FolderCode, AlertCircle, GitPullRequest, ShieldCheck } from 'lucide-react';
 
 interface RepoTabsCardProps {
   repoFullName: string;
 }
 
 export function RepoTabsCard({ repoFullName }: RepoTabsCardProps) {
-  const [activeTab, setActiveTab] = useState<'files' | 'issues' | 'prs'>('files');
+  const [activeTab, setActiveTab] = useState<'files' | 'issues' | 'prs' | 'deps'>('files');
 
   const tabs = [
     { id: 'files', label: 'Berkas & Edit', icon: FolderCode },
+    { id: 'deps', label: 'Audit Manifes', icon: ShieldCheck },
     { id: 'issues', label: 'Issues', icon: AlertCircle },
     { id: 'prs', label: 'Pull Requests', icon: GitPullRequest },
   ] as const;
@@ -23,6 +25,8 @@ export function RepoTabsCard({ repoFullName }: RepoTabsCardProps) {
       title={
         activeTab === 'files'
           ? 'Penjelajah Berkas & Editor'
+          : activeTab === 'deps'
+          ? 'Audit Keamanan Manifes'
           : activeTab === 'issues'
           ? 'Daftar Issue Terbaru'
           : 'Pull Request Terbaru'
@@ -30,6 +34,8 @@ export function RepoTabsCard({ repoFullName }: RepoTabsCardProps) {
       subtitle={
         activeTab === 'files'
           ? 'Buka file untuk diedit dan push langsung ke GitHub'
+          : activeTab === 'deps'
+          ? 'Pemeriksaan package.json & requirements.txt dengan AI Gemini'
           : activeTab === 'issues'
           ? 'Issue yang belum terselesaikan'
           : 'PR aktif dan riwayat kontribusi'
@@ -56,6 +62,7 @@ export function RepoTabsCard({ repoFullName }: RepoTabsCardProps) {
       }
     >
       {activeTab === 'files' && <RepoFilesTab repoFullName={repoFullName} />}
+      {activeTab === 'deps' && <ManifestSecurityCard repoFullName={repoFullName} />}
       {activeTab === 'issues' && <IssueList repoFullName={repoFullName} />}
       {activeTab === 'prs' && <PrList repoFullName={repoFullName} />}
     </Card>

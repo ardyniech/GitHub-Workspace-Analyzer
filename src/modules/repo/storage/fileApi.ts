@@ -39,10 +39,11 @@ export const fileApi = {
     });
   },
 
-  async fetchFileContent(fullName: string, path: string, token: string): Promise<{ content: string; sha: string }> {
-    const res = await fetch(`${CONFIG.GITHUB_API}/repos/${fullName}/contents/${path}`, {
-      headers: { Authorization: `token ${token}` },
-    });
+  async fetchFileContent(fullName: string, path: string, token?: string | null): Promise<{ content: string; sha: string }> {
+    const headers: HeadersInit = {};
+    if (token) headers['Authorization'] = `token ${token}`;
+
+    const res = await fetch(`${CONFIG.GITHUB_API}/repos/${fullName}/contents/${path}`, { headers });
     if (!res.ok) {
       if (res.status === 404) return { content: '', sha: '' };
       throw new Error(`Gagal membaca berkas: ${path}`);

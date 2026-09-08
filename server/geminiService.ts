@@ -17,11 +17,11 @@ export function getAiClient(): GoogleGenAI {
   return aiClient;
 }
 
-// Model urutan utama: gemini-3.8-flash sebagai prioritas pertama
+// Model fallback cascade for high availability
 export const CANDIDATE_MODELS = [
-  'gemini-3.8-flash',
-  'gemini-3.1-flash-lite',
   'gemini-2.5-flash',
+  'gemini-3.1-flash-lite',
+  'gemini-3.8-flash',
 ];
 
 export async function generateAiContentWithFallback(
@@ -32,46 +32,51 @@ export async function generateAiContentWithFallback(
   const now = Date.now();
   let lastError: any = null;
 
-  // Filter model yang sedang dalam cooldown
-  const availableModels = CANDIDATE_MODELS.filter((m) => {
-    const coolDownUntil = modelCooldownMap.get(m) || 0;
-    return now >= coolDownUntil;
+  // Filter model yang tidak sedang cooldown
+  const activeModels = CANDIDATE_MODELS.filter((m) => {
+    const coolUntil = modelCooldownMap.get(m) || 0;
+    return now >= coolUntil;
   });
 
-  const modelsToTry = availableModels.length > 0 ? availableModels : CANDIDATE_MODELS;
+  const modelsToTry = activeModels.length > 0 ? activeModels : CANDIDATE_MODELS;
 
   for (const modelName of modelsToTry) {
-    try {
-      console.log(`[Module:AI] Attempting generation with ${modelName}...`);
-      const result = await ai.models.generateContent({
-        model: modelName,
-        contents,
-        config: {
-          systemInstruction,
-          temperature: 0.7,
-          maxOutputTokens: 32768,
-        },
-      });
+    // Retry up to 2 attempts for transient 503/429
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const result = await ai.models.generateContent({
+          model: modelName,
+          contents,
+          config: {
+            systemInstruction,
+            temperature: 0.7,
+            maxOutputTokens: 32768,
+          },
+        });
 
-      if (result && result.text) {
-        console.log(`[Module:AI] Generation succeeded using model: ${modelName}`);
-        modelCooldownMap.delete(modelName);
-        return { text: result.text, model: modelName };
-      }
-    } catch (err: any) {
-      lastError = err;
-      const errMsg = String(err?.message || err);
-      console.warn(`[Module:AI] Model ${modelName} failed: ${errMsg.slice(0, 140)}`);
+        if (result && result.text) {
+          modelCooldownMap.delete(modelName);
+          return { text: result.text, model: modelName };
+        }
+      } catch (err: any) {
+        lastError = err;
+        const errMsg = String(err?.message || err);
+        const isTransient =
+          errMsg.includes('503') ||
+          errMsg.includes('429') ||
+          errMsg.includes('high demand') ||
+          errMsg.includes('UNAVAILABLE') ||
+          errMsg.includes('quota');
 
-      // Cooldown jika terkena limit atau busy
-      if (
-        errMsg.includes('429') ||
-        errMsg.includes('503') ||
-        errMsg.includes('quota') ||
-        errMsg.includes('UNAVAILABLE') ||
-        errMsg.includes('high demand')
-      ) {
-        modelCooldownMap.set(modelName, Date.now() + 60_000);
+        if (isTransient) {
+          modelCooldownMap.set(modelName, Date.now() + 45_000);
+          if (attempt === 0) {
+            // Short exponential backoff before next attempt/model
+            await new Promise((resolve) => setTimeout(resolve, 800));
+            continue;
+          }
+        }
+        break; // Lanjut ke model kandidat berikutnya di fallback cascade
       }
     }
   }

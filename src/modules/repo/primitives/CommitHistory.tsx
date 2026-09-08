@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { commitApi, CommitItem } from '../storage/commitApi';
+import { generateRefactorProposal } from '../logic/aiRefactorEngine';
+import { RefactorProposal } from '../logic/aiRefactorTypes';
 import { CommitTimelineItem } from './CommitTimelineItem';
 import { CommitDiffModal } from './CommitDiffModal';
+import { AiRefactorModal } from './AiRefactorModal';
 import { useAuth } from '../../auth';
 import { dispatcher } from '../../../core/dispatcher';
 import { Card } from '../../../shared/atoms/Card';
-import { RotateCw, Loader2 } from 'lucide-react';
+import { RotateCw, Loader2, Wand2 } from 'lucide-react';
 
 interface CommitHistoryProps {
   repoFullName: string;
@@ -17,6 +20,7 @@ export function CommitHistory({ repoFullName }: CommitHistoryProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [selectedSha, setSelectedSha] = useState<string | null>(null);
+  const [activeProposal, setActiveProposal] = useState<RefactorProposal | null>(null);
 
   const loadCommits = async () => {
     setLoading(true);
@@ -39,20 +43,35 @@ export function CommitHistory({ repoFullName }: CommitHistoryProps) {
     return () => unsub();
   }, [repoFullName, token]);
 
+  const handleTriggerRefactor = (commitMsg?: string) => {
+    const proposal = generateRefactorProposal(repoFullName, commitMsg);
+    setActiveProposal(proposal);
+  };
+
   return (
     <>
       <Card
         title="Riwayat Commit"
         subtitle="5 Commit terakhir pada repositori"
         headerAction={
-          <button
-            onClick={loadCommits}
-            disabled={loading}
-            className="flex items-center gap-1 text-[11px] font-semibold text-zinc-500 hover:text-zinc-900 bg-zinc-100 hover:bg-zinc-200 px-2 py-1 rounded-md transition-colors cursor-pointer disabled:opacity-50"
-          >
-            <RotateCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
-            <span>Segarkan</span>
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => handleTriggerRefactor()}
+              className="flex items-center gap-1 text-[11px] font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-300 px-2 py-1 rounded-md transition-colors cursor-pointer"
+              title="Cetuskan AI Refactor berbasis memori agent"
+            >
+              <Wand2 className="w-3 h-3 text-purple-600" />
+              <span>AI Refactor</span>
+            </button>
+            <button
+              onClick={loadCommits}
+              disabled={loading}
+              className="flex items-center gap-1 text-[11px] font-semibold text-zinc-500 hover:text-zinc-900 bg-zinc-100 hover:bg-zinc-200 px-2 py-1 rounded-md transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <RotateCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
+              <span>Segarkan</span>
+            </button>
+          </div>
         }
       >
         {loading && commits.length === 0 ? (
@@ -71,6 +90,7 @@ export function CommitHistory({ repoFullName }: CommitHistoryProps) {
                 key={item.sha || idx}
                 item={item}
                 onViewDiff={() => setSelectedSha(item.sha)}
+                onRefactor={() => handleTriggerRefactor(item.commit.message)}
               />
             ))}
           </div>
@@ -82,6 +102,13 @@ export function CommitHistory({ repoFullName }: CommitHistoryProps) {
           repoFullName={repoFullName}
           sha={selectedSha}
           onClose={() => setSelectedSha(null)}
+        />
+      )}
+
+      {activeProposal && (
+        <AiRefactorModal
+          proposal={activeProposal}
+          onClose={() => setActiveProposal(null)}
         />
       )}
     </>
