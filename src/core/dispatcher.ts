@@ -1,38 +1,16 @@
-type Listener = (payload: any) => void;
+type Listener = (data: any) => void;
 
-class Dispatcher {
-  private listeners: Map<string, Set<Listener>> = new Map();
+class EventDispatcher {
+  private listeners: Map<string, Listener[]> = new Map();
 
-  on(event: string, callback: Listener): () => void {
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, new Set());
-    }
-    this.listeners.get(event)!.add(callback);
-    return () => this.off(event, callback);
+  subscribe(event: string, listener: Listener) {
+    if (!this.listeners.has(event)) this.listeners.set(event, []);
+    this.listeners.get(event)?.push(listener);
   }
 
-  off(event: string, callback: Listener): void {
-    const list = this.listeners.get(event);
-    if (list) {
-      list.delete(callback);
-      if (list.size === 0) {
-        this.listeners.delete(event);
-      }
-    }
-  }
-
-  emit(event: string, payload?: any): void {
-    const list = this.listeners.get(event);
-    if (list) {
-      list.forEach((cb) => {
-        try {
-          cb(payload);
-        } catch (err) {
-          console.error(`[Module:Core] Error in listener for ${event}:`, err);
-        }
-      });
-    }
+  dispatch(event: string, data: any) {
+    this.listeners.get(event)?.forEach(fn => fn(data));
   }
 }
 
-export const dispatcher = new Dispatcher();
+export const dispatcher = new EventDispatcher();
