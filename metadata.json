@@ -1,0 +1,8 @@
+{
+  "name": "AI Agent Dev-Center & GitHub Analyzer",
+  "description": "Platform analitik dan manajemen repositori GitHub bertenaga AI Agent. Dilengkapi dengan PR Pre-Flight Fix-It, OSV Audit, Memory Fragmentation Diagnostics, Offline Sync Worker, dan arsitektur cellular modular yang kokoh.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

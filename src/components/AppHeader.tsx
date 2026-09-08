@@ -1,0 +1,35 @@
+import React from 'react';
+import { Github } from 'lucide-react';
+import { NotificationCenter } from '../modules/notification';
+import { AuthPanel, useAuth } from '../modules/auth';
+import { VoiceCommanderButton } from '../modules/voiceCommander';
+
+interface AppHeaderProps {
+  repoFullName?: string;
+}
+
+export function AppHeader({ repoFullName }: AppHeaderProps) {
+  const { token } = useAuth();
+
+  return (
+    <header className="border-b border-zinc-200 bg-white sticky top-0 z-10 px-4 py-3 flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <div className="p-1.5 bg-zinc-900 rounded-lg text-white">
+          <Github className="w-5 h-5" />
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <h1 className="font-bold text-sm tracking-tight leading-none">GitHub Workspace Analyzer</h1>
+          <p className="text-[10px] text-zinc-500 font-medium leading-none">
+            Asisten Cerdas Pengembangan Kode & Copilot Gemini
+          </p>
+        </div>
+      </div>
+      <div className="flex items-center gap-2.5">
+        <VoiceCommanderButton repoFullName={repoFullName} token={token} />
+        <NotificationCenter />
+        <div className="h-4 w-[1px] bg-zinc-200" />
+        <AuthPanel />
+      </div>
+    </header>
+  );
+}
