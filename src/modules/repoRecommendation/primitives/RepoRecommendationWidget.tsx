@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useRepoRecommendation } from '../logic/useRepoRecommendation';
 import { QuickActionGrid } from './QuickActionGrid';
+import { BatchFixButton } from './BatchFixButton';
 import { RepoRecommendationModal } from './RepoRecommendationModal';
-import { Sparkles, ArrowRight, Zap, Award } from 'lucide-react';
+import { Sparkles, ArrowRight, Award } from 'lucide-react';
 import { Button } from '../../../shared/atoms/Button';
 
 interface RepoRecommendationWidgetProps {
@@ -11,12 +12,13 @@ interface RepoRecommendationWidgetProps {
 
 export function RepoRecommendationWidget({ repoFullName }: RepoRecommendationWidgetProps) {
   const [showModal, setShowModal] = useState(false);
-  const { quickActions, stats, executeQuickAction, executingId } = useRepoRecommendation(repoFullName);
+  const { quickActions, rawRecommendations, stats, executeQuickAction, executingId, refresh } =
+    useRepoRecommendation(repoFullName);
 
   return (
     <div className="bg-white border border-indigo-100 rounded-2xl p-3.5 flex flex-col gap-2.5 shadow-2xs">
       {/* Header bar */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <div className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg">
             <Sparkles className="w-3.5 h-3.5 animate-pulse" />
@@ -36,13 +38,18 @@ export function RepoRecommendationWidget({ repoFullName }: RepoRecommendationWid
             <Award className="w-3 h-3 text-indigo-500" />
             <span>Kesiapan: {stats.readinessScore}%</span>
           </div>
+          <BatchFixButton
+            repoFullName={repoFullName}
+            recommendations={rawRecommendations}
+            onBatchDone={refresh}
+          />
           <Button
             size="sm"
             onClick={() => setShowModal(true)}
             icon={<ArrowRight className="w-3 h-3" />}
-            className="h-6 text-[9px] font-bold bg-zinc-900 hover:bg-black text-white px-2"
+            className="h-7 text-[9px] font-bold bg-zinc-900 hover:bg-black text-white px-2 rounded-xl"
           >
-            Lihat Semua
+            Detail
           </Button>
         </div>
       </div>

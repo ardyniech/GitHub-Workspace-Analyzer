@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useRepoRecommendation } from '../logic/useRepoRecommendation';
+import { scanCodebaseHealth } from '../logic/codebaseHealthScanner';
 import { QuickActionGrid } from './QuickActionGrid';
 import { RecommendationCard } from './RecommendationCard';
 import { ReadinessScoreCard } from './ReadinessScoreCard';
+import { HealthScanCard } from './HealthScanCard';
+import { BatchFixButton } from './BatchFixButton';
 import { CategoryFilterTabs } from './CategoryFilterTabs';
 import { X, Sparkles, Zap, Layers } from 'lucide-react';
 
@@ -14,6 +17,7 @@ interface RepoRecommendationModalProps {
 export function RepoRecommendationModal({ repoFullName, onClose }: RepoRecommendationModalProps) {
   const {
     recommendations,
+    rawRecommendations,
     quickActions,
     stats,
     executingId,
@@ -22,7 +26,13 @@ export function RepoRecommendationModal({ repoFullName, onClose }: RepoRecommend
     executeRecommendation,
     executeQuickAction,
     dismissRecommendation,
+    refresh,
   } = useRepoRecommendation(repoFullName);
+
+  const healthReport = useMemo(
+    () => scanCodebaseHealth(repoFullName, stats.completed, stats.total),
+    [repoFullName, stats.completed, stats.total]
+  );
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
@@ -47,8 +57,20 @@ export function RepoRecommendationModal({ repoFullName, onClose }: RepoRecommend
           </button>
         </div>
 
-        {/* Readiness Score Bar */}
-        <ReadinessScoreCard stats={stats} />
+        {/* Health Inspector Card */}
+        <HealthScanCard report={healthReport} />
+
+        {/* Readiness Score Bar & Batch Fix */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+          <div className="flex-1">
+            <ReadinessScoreCard stats={stats} />
+          </div>
+          <BatchFixButton
+            repoFullName={repoFullName}
+            recommendations={rawRecommendations}
+            onBatchDone={refresh}
+          />
+        </div>
 
         {/* Section 1: Quick Actions */}
         <div className="flex flex-col gap-1.5">
