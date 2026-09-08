@@ -1,0 +1,8 @@
+{
+  "name": "GitHub Workspace Analyzer",
+  "description": "Sebuah aplikasi bento dashboard modern untuk mengeksplorasi repositori GitHub, mengelola issue, dan melakukan analisis mendalam menggunakan asisten AI berbasis Gemini.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
