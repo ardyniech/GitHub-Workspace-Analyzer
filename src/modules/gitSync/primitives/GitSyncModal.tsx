@@ -89,16 +89,10 @@ export function GitSyncModal({ onClose, defaultRepoFullName, authToken }: GitSyn
         </div>
 
         {/* Error or Result Feedback */}
-        {error && (
-          <div className="p-2 bg-rose-50 border border-rose-200 rounded-lg text-[9.5px] text-rose-700 flex items-start gap-1.5">
-            <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0 mt-0.5" />
-            <div className="flex-1 break-all">{error}</div>
-          </div>
-        )}
-        {result && (
-          <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-[9.5px] text-emerald-800 flex items-start gap-1.5">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-            <div>{result.message}</div>
+        {(error || result) && (
+          <div className={`p-2 rounded-lg text-[9.5px] flex items-start gap-1.5 border ${error ? 'bg-rose-50 border-rose-200 text-rose-700' : 'bg-emerald-50 border-emerald-200 text-emerald-800'}`}>
+            {error ? <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0 mt-0.5" /> : <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />}
+            <div className="flex-1 break-all">{error || result?.message}</div>
           </div>
         )}
 
