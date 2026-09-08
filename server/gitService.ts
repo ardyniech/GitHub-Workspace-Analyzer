@@ -1,5 +1,12 @@
 import { execSync } from 'child_process';
 
+export interface GitCommitInfo {
+  hash: string;
+  author: string;
+  message: string;
+  relativeTime: string;
+}
+
 export interface GitRepoStatus {
   branch: string;
   lastCommitHash: string;
@@ -7,6 +14,7 @@ export interface GitRepoStatus {
   hasRemote: boolean;
   remoteUrl?: string;
   isClean: boolean;
+  recentCommits: GitCommitInfo[];
 }
 
 export function getGitRepoStatus(): GitRepoStatus {
@@ -22,8 +30,20 @@ export function getGitRepoStatus(): GitRepoStatus {
       // No remote configured yet
     }
 
-    const statusOut = execSync('git status --porcelain', { encoding: 'utf8' }).trim();
-    const isClean = statusOut.length === 0;
+    let recentCommits: GitCommitInfo[] = [];
+    try {
+      const logOut = execSync('git log -n 5 --pretty=format:"%h|%an|%s|%cr"', { encoding: 'utf8' }).trim();
+      if (logOut) {
+        recentCommits = logOut.split('\n').map(l => {
+          const [hash = '', author = '', message = '', relativeTime = ''] = l.split('|');
+          return { hash, author, message, relativeTime };
+        });
+      }
+    } catch {
+      // Empty git log
+    }
+
+    const isClean = execSync('git status --porcelain', { encoding: 'utf8' }).trim().length === 0;
 
     return {
       branch,
@@ -32,6 +52,7 @@ export function getGitRepoStatus(): GitRepoStatus {
       hasRemote: Boolean(remoteUrl),
       remoteUrl: remoteUrl || undefined,
       isClean,
+      recentCommits,
     };
   } catch (error: any) {
     console.error('[Module:Git] Error in getGitRepoStatus:', error?.message);
@@ -39,7 +60,7 @@ export function getGitRepoStatus(): GitRepoStatus {
   }
 }
 
-export function pushToRemote(repoUrl: string, token?: string): { success: boolean; message: string } {
+export function pushToRemote(repoUrl: string, token?: string, branch = 'main'): { success: boolean; message: string } {
   try {
     let targetUrl = repoUrl.trim();
     if (token && targetUrl.startsWith('https://')) {
@@ -47,32 +68,28 @@ export function pushToRemote(repoUrl: string, token?: string): { success: boolea
       targetUrl = `https://${token}@github.com/${cleanUrl}`;
     }
 
-    // Configure origin
     try {
       execSync('git remote remove origin', { stdio: 'pipe' });
     } catch {
-      // Ignored if origin doesn't exist
+      // Ignored
     }
 
     execSync(`git remote add origin ${targetUrl}`, { stdio: 'pipe' });
 
-    // Stage any uncommitted files and commit
     try {
       execSync('git add -A', { stdio: 'pipe' });
       execSync('git commit -m "feat: automated sync from AI Agent DevCenter"', { stdio: 'pipe' });
     } catch {
-      // Nothing to commit
+      // Clean
     }
 
-    // Push to main branch
-    const pushOutput = execSync('git push -u origin main --force', { encoding: 'utf8', stdio: 'pipe' });
+    const pushOutput = execSync(`git push -u origin HEAD:refs/heads/${branch} --force`, { encoding: 'utf8', stdio: 'pipe' });
     return {
       success: true,
-      message: `Push ke GitHub berhasil: ${pushOutput || 'Semua commit tersinkronisasi.'}`,
+      message: `Push ke cabang '${branch}' di GitHub berhasil! ${pushOutput ? `(${pushOutput.trim()})` : ''}`,
     };
   } catch (error: any) {
     console.error('[Module:Git] Error pushing to GitHub:', error?.message);
-    // Sanitize any token from the error output
     let safeMsg = error?.message || 'Push ke GitHub gagal.';
     if (token) {
       safeMsg = safeMsg.replace(new RegExp(token, 'g'), '***');

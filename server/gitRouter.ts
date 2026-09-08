@@ -14,12 +14,12 @@ gitRouter.get('/status', (req, res) => {
 
 gitRouter.post('/push', (req, res) => {
   try {
-    const { repoUrl, token } = req.body;
+    const { repoUrl, token, branch } = req.body;
     if (!repoUrl) {
       return res.status(400).json({ error: 'URL Repositori GitHub target wajib diisi.' });
     }
 
-    const result = pushToRemote(repoUrl, token);
+    const result = pushToRemote(repoUrl, token, branch);
     res.json(result);
   } catch (err: any) {
     res.status(500).json({ error: err?.message || 'Proses push ke GitHub gagal.' });

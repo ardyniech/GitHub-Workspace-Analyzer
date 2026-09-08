@@ -27,7 +27,7 @@ export function useGitSync() {
     loadStatus();
   }, []);
 
-  const pushCode = async (repoUrl: string, token?: string) => {
+  const pushCode = async (repoUrl: string, token?: string, branch?: string) => {
     if (!repoUrl.trim()) {
       setError('URL Repositori GitHub wajib diisi.');
       return;
@@ -38,12 +38,12 @@ export function useGitSync() {
     setResult(null);
 
     try {
-      const res = await gitSyncApi.push({ repoUrl: repoUrl.trim(), token });
+      const res = await gitSyncApi.push({ repoUrl: repoUrl.trim(), token, branch: branch?.trim() || undefined });
       setResult(res);
       dispatcher.emit('notify:push', {
         type: 'success',
         title: 'Push GitHub Berhasil',
-        message: 'Kode dan seluruh perubahan modul telah berhasil dipush ke GitHub!',
+        message: `Kode berhasil dipush ke GitHub (cabang: ${branch?.trim() || 'main'})!`,
       });
       await loadStatus();
     } catch (err: any) {

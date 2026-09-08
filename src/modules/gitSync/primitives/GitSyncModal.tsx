@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useGitSync } from '../logic/useGitSync';
+import { RecentCommitList } from './RecentCommitList';
+import { BranchInput } from './BranchInput';
 import { Button } from '../../../shared/atoms/Button';
-import { X, GitBranch, GitCommit, UploadCloud, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
+import { X, GitBranch, UploadCloud, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
 
 interface GitSyncModalProps {
   onClose: () => void;
@@ -12,6 +14,7 @@ interface GitSyncModalProps {
 export function GitSyncModal({ onClose, defaultRepoFullName, authToken }: GitSyncModalProps) {
   const { status, isLoading, isPushing, error, result, refreshStatus, pushCode } = useGitSync();
   const [repoUrl, setRepoUrl] = useState('');
+  const [targetBranch, setTargetBranch] = useState('main');
 
   useEffect(() => {
     if (status?.remoteUrl) {
@@ -19,15 +22,18 @@ export function GitSyncModal({ onClose, defaultRepoFullName, authToken }: GitSyn
     } else if (defaultRepoFullName) {
       setRepoUrl(`https://github.com/${defaultRepoFullName}.git`);
     }
+    if (status?.branch) {
+      setTargetBranch(status.branch);
+    }
   }, [status, defaultRepoFullName]);
 
   const handlePush = () => {
-    pushCode(repoUrl, authToken || undefined);
+    pushCode(repoUrl, authToken || undefined, targetBranch);
   };
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl max-w-lg w-full p-4 border border-zinc-200 shadow-2xl flex flex-col gap-3 text-xs">
+      <div className="bg-white rounded-2xl max-w-lg w-full p-4 border border-zinc-200 shadow-2xl flex flex-col gap-3 text-xs max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-zinc-100 pb-2.5">
           <div className="flex items-center gap-2">
@@ -44,36 +50,41 @@ export function GitSyncModal({ onClose, defaultRepoFullName, authToken }: GitSyn
           </button>
         </div>
 
-        {/* Status Card */}
-        <div className="p-2.5 bg-zinc-50 border border-zinc-200 rounded-xl flex flex-col gap-1.5">
-          <div className="flex items-center justify-between">
-            <span className="font-bold text-[10px] text-zinc-500 flex items-center gap-1">
-              <GitBranch className="w-3.5 h-3.5 text-indigo-600" /> Cabang Aktif:
-              <strong className="text-zinc-800 font-mono font-bold">{status?.branch || 'main'}</strong>
-            </span>
-            <button onClick={refreshStatus} className="text-[9px] text-zinc-400 hover:text-zinc-600 flex items-center gap-1 cursor-pointer">
-              <RefreshCw className={`w-2.5 h-2.5 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
-            </button>
-          </div>
-          <div className="flex items-center gap-1.5 text-[9.5px] text-zinc-600 font-mono bg-white p-1.5 rounded border border-zinc-100">
-            <GitCommit className="w-3 h-3 text-zinc-400 shrink-0" />
-            <span className="font-bold text-indigo-700 shrink-0">{status?.lastCommitHash || '8dd2a04'}</span>
-            <span className="truncate text-zinc-500">{status?.lastCommitMessage || 'feat: upgrade simulasi ke task agen'}</span>
-          </div>
+        {/* Status Header */}
+        <div className="flex items-center justify-between px-1">
+          <span className="font-bold text-[10px] text-zinc-500 flex items-center gap-1">
+            <GitBranch className="w-3.5 h-3.5 text-indigo-600" /> Cabang Lokal:
+            <strong className="text-zinc-800 font-mono font-bold">{status?.branch || 'main'}</strong>
+          </span>
+          <button onClick={refreshStatus} className="text-[9px] text-zinc-400 hover:text-zinc-600 flex items-center gap-1 cursor-pointer">
+            <RefreshCw className={`w-2.5 h-2.5 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
+          </button>
         </div>
 
-        {/* Input Target Repo */}
-        <div className="flex flex-col gap-1">
-          <label className="text-[10px] font-bold text-zinc-700">URL Repositori GitHub Target:</label>
-          <input
-            type="text"
-            value={repoUrl}
-            onChange={(e) => setRepoUrl(e.target.value)}
-            placeholder="https://github.com/username/repository.git"
-            className="w-full px-2.5 py-1.5 rounded-lg border border-zinc-300 text-xs font-mono focus:border-indigo-500 focus:outline-hidden"
+        {/* Recent Commits List */}
+        <RecentCommitList commits={status?.recentCommits} />
+
+        {/* Input Target Repo & Branch */}
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold text-zinc-700">URL Repositori GitHub Target:</label>
+            <input
+              type="text"
+              value={repoUrl}
+              onChange={(e) => setRepoUrl(e.target.value)}
+              placeholder="https://github.com/username/repository.git"
+              className="w-full px-2.5 py-1.5 rounded-lg border border-zinc-300 text-xs font-mono focus:border-indigo-500 focus:outline-hidden"
+            />
+          </div>
+
+          <BranchInput
+            branch={targetBranch}
+            onChangeBranch={setTargetBranch}
+            defaultBranch={status?.branch || 'main'}
           />
+
           <p className="text-[9px] text-zinc-400">
-            {authToken ? '✓ Terautentikasi otomatis menggunakan GitHub Token yang tersimpan' : 'Tip: Hubungkan token di menu Auth untuk izin push ke repo private'}
+            {authToken ? '✓ Terautentikasi otomatis via GitHub Token' : 'Tip: Hubungkan token di menu Auth untuk izin push ke repo privat'}
           </p>
         </div>
 
@@ -93,8 +104,8 @@ export function GitSyncModal({ onClose, defaultRepoFullName, authToken }: GitSyn
 
         {/* Push Action */}
         <div className="flex items-center justify-between pt-2 border-t border-zinc-100">
-          <span className="text-[9.5px] text-zinc-500">
-            Atau gunakan menu <strong className="text-zinc-700">Settings &gt; Export to GitHub</strong> di AI Studio.
+          <span className="text-[9px] text-zinc-400">
+            Atau menu <strong className="text-zinc-600">Settings &gt; Export to GitHub</strong> di AI Studio.
           </span>
           <Button
             size="sm"
@@ -103,7 +114,7 @@ export function GitSyncModal({ onClose, defaultRepoFullName, authToken }: GitSyn
             icon={<UploadCloud className="w-3.5 h-3.5" />}
             className="h-7 text-[10px] font-bold bg-zinc-900 hover:bg-black text-white px-3"
           >
-            {isPushing ? 'Mendorong ke GitHub...' : 'Push ke GitHub'}
+            {isPushing ? `Mendorong ke '${targetBranch}'...` : `Push ke '${targetBranch}'`}
           </Button>
         </div>
       </div>
