@@ -7,6 +7,7 @@ import { CopilotProposalActions } from './CopilotProposalActions';
 import { CopilotFileTabs } from './CopilotFileTabs';
 import { useSecurityScan, SecurityBadge, SecurityFindingsList, SecurityWarningModal } from '../../security';
 import { runPreCommitTests, PreCommitReport, PreCommitTestModal } from '../../tester';
+import { isAutoPilotEnabled } from '../storage/autoPilotStorage';
 import { AlertTriangle } from 'lucide-react';
 
 interface CopilotProposalProps {
@@ -44,6 +45,10 @@ export function CopilotProposal({ jsonString, repoFullName }: CopilotProposalPro
 
   const handleInitiatePush = () => {
     if (filesToPush.length === 0) return;
+    if (isAutoPilotEnabled()) {
+      pushAllFiles(filesToPush, proposal.commitMessage);
+      return;
+    }
     const testRes = runPreCommitTests(filesToPush);
     setTestReport(testRes);
   };

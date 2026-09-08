@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from '../../../shared/atoms/Button';
+import { AutoPilotBadge } from './AutoPilotBadge';
 import { Trash2, ShieldAlert, GitPullRequest, Maximize2, Minimize2, Download, Mic, Brain, BrainCircuit, Activity, FlaskConical, Sparkles, BookOpen, ShieldCheck, HeartPulse, Wand2, Compass, PlayCircle, Zap, Layers, Cpu, Network } from 'lucide-react';
 
 interface AiChatActionsProps {
@@ -19,6 +20,7 @@ interface AiChatActionsProps {
 export function AiChatActions(p: AiChatActionsProps) {
   return (
     <div className="flex items-center gap-1 flex-wrap">
+      <AutoPilotBadge />
       <Button variant="ghost" size="sm" onClick={p.onTriggerContinuousDevelopment} icon={<Cpu className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />} className="h-7 text-xs text-emerald-900 bg-emerald-50 hover:bg-emerald-100 font-bold border border-emerald-200">
         Auto-Dev
       </Button>
