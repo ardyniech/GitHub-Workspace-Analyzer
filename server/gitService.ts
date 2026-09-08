@@ -1,0 +1,82 @@
+import { execSync } from 'child_process';
+
+export interface GitRepoStatus {
+  branch: string;
+  lastCommitHash: string;
+  lastCommitMessage: string;
+  hasRemote: boolean;
+  remoteUrl?: string;
+  isClean: boolean;
+}
+
+export function getGitRepoStatus(): GitRepoStatus {
+  try {
+    const branch = execSync('git branch --show-current', { encoding: 'utf8' }).trim() || 'main';
+    const lastCommitHash = execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim();
+    const lastCommitMessage = execSync('git log -1 --pretty=%B', { encoding: 'utf8' }).trim();
+    
+    let remoteUrl = '';
+    try {
+      remoteUrl = execSync('git remote get-url origin', { encoding: 'utf8' }).trim();
+    } catch {
+      // No remote configured yet
+    }
+
+    const statusOut = execSync('git status --porcelain', { encoding: 'utf8' }).trim();
+    const isClean = statusOut.length === 0;
+
+    return {
+      branch,
+      lastCommitHash,
+      lastCommitMessage,
+      hasRemote: Boolean(remoteUrl),
+      remoteUrl: remoteUrl || undefined,
+      isClean,
+    };
+  } catch (error: any) {
+    console.error('[Module:Git] Error in getGitRepoStatus:', error?.message);
+    throw new Error('Gagal mengambil status repositori Git lokal.');
+  }
+}
+
+export function pushToRemote(repoUrl: string, token?: string): { success: boolean; message: string } {
+  try {
+    let targetUrl = repoUrl.trim();
+    if (token && targetUrl.startsWith('https://')) {
+      const cleanUrl = targetUrl.replace(/^https:\/\/(.*@)?github\.com\//, '');
+      targetUrl = `https://${token}@github.com/${cleanUrl}`;
+    }
+
+    // Configure origin
+    try {
+      execSync('git remote remove origin', { stdio: 'pipe' });
+    } catch {
+      // Ignored if origin doesn't exist
+    }
+
+    execSync(`git remote add origin ${targetUrl}`, { stdio: 'pipe' });
+
+    // Stage any uncommitted files and commit
+    try {
+      execSync('git add -A', { stdio: 'pipe' });
+      execSync('git commit -m "feat: automated sync from AI Agent DevCenter"', { stdio: 'pipe' });
+    } catch {
+      // Nothing to commit
+    }
+
+    // Push to main branch
+    const pushOutput = execSync('git push -u origin main --force', { encoding: 'utf8', stdio: 'pipe' });
+    return {
+      success: true,
+      message: `Push ke GitHub berhasil: ${pushOutput || 'Semua commit tersinkronisasi.'}`,
+    };
+  } catch (error: any) {
+    console.error('[Module:Git] Error pushing to GitHub:', error?.message);
+    // Sanitize any token from the error output
+    let safeMsg = error?.message || 'Push ke GitHub gagal.';
+    if (token) {
+      safeMsg = safeMsg.replace(new RegExp(token, 'g'), '***');
+    }
+    throw new Error(safeMsg);
+  }
+}

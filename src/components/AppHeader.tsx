@@ -3,6 +3,7 @@ import { Github } from 'lucide-react';
 import { NotificationCenter } from '../modules/notification';
 import { AuthPanel, useAuth } from '../modules/auth';
 import { VoiceCommanderButton } from '../modules/voiceCommander';
+import { GitSyncButton } from '../modules/gitSync';
 
 interface AppHeaderProps {
   repoFullName?: string;
@@ -26,6 +27,7 @@ export function AppHeader({ repoFullName }: AppHeaderProps) {
       </div>
       <div className="flex items-center gap-2.5">
         <VoiceCommanderButton repoFullName={repoFullName} token={token} />
+        <GitSyncButton defaultRepoFullName={repoFullName} authToken={token} />
         <NotificationCenter />
         <div className="h-4 w-[1px] bg-zinc-200" />
         <AuthPanel />
