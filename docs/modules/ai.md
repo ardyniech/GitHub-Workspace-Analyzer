@@ -1,12 +1,18 @@
-# AI Module
+# Modul: AI Agent Executor (sebelumnya AI Chat)
 
-Modul asisten pengembangan bertenaga Google Gemini AI (`gemini-3.1-flash-lite`, `gemini-3.8-flash`, `gemini-2.5-flash`, serta `gemini-3.1-flash-live-preview` untuk percakapan audio real-time).
+## Deskripsi
+Modul ini bertindak sebagai otak komputasi untuk menjalankan analisis otonom (Agentic Execution), mem-parsing perintah secara langsung dan memberikan output *Markdown* lengkap tanpa riwayat chat "basa-basi".
 
-## Fitur
-- **Percakapan Suara Real-Time (Live API)**: Dialog audio interaktif langsung dengan model `gemini-3.1-flash-live-preview` melalui WebSocket dupleks penuh, pemrosesan PCM 16-bit 16kHz/24kHz, visualisasi gelombang suara (*audio waveform/orb*), dan deteksi interupsi instan.
-- **High-Throughput & Circuit Breaker**: Menggunakan model `gemini-3.1-flash-lite` sebagai pemroses utama dengan mekanisme circuit breaker otomatis untuk menghindari kuota exhausted (429) dan lonjakan trafik (503).
-- **Analisis Cerdas Repositori**: Menganalisis berkas `README.md`, struktur proyek, dan riwayat commit secara kontekstual.
-- **Generator Otomatis Draft Pull Request (PR)**: Membuat deskripsi PR terstruktur secara instan berdasarkan riwayat commit terbaru (`CommitHistory`) dan audit keamanan otomatis (`Security Scan`).
-- **Jendela Chat AI Agent Lega**: Tampilan chat luas berukuran tinggi hingga 640px dengan tombol mode ekspansi layar penuh (*Fullscreen / Mode Lega*) untuk kemudahan interaksi.
-- **Proteksi Commit & Copilot Direct-Push (Multi-File Editing hingga 30 Berkas)**: Kemampuan AI Copilot untuk mengusulkan dan memodifikasi hingga 30 berkas sekaligus (`Batch 30`). Dilengkapi pencarian & pemfilteran berkas, kotak centang seleksi berkas individual/semua, pratinjau git diff per berkas, pemindaian celah keamanan, dan tombol simpan *"Commit & Push"* dengan indikator persentase progres, visual bilah progres (*progress bar*), serta tombol pembatalan (*cancel*) darurat.
-- **Ekspor Laporan Analisis (*Markdown Export*)**: Fitur unduh rangkuman hasil analisis AI, audit keamanan, dan usulan solusi dalam format Markdown (`.md`) yang rapi dengan satu klik tombol *"Export Laporan"*, siap dibagikan ke tim pengembang atau dilampirkan pada issue/PR.
+## Komponen & Fitur
+1. **Agent Executor UI**: Menggantikan tampilan chat tradisional dengan antarmuka terminal/komando eksekusi langsung.
+2. **Context Injector**: Secara cerdas menarik metadata repositori (README, struktur, commit) untuk disertakan ke dalam prompt sistem sebelum dieksekusi.
+3. **Agent Modals**: Isolasi sub-fitur AI (seperti Memory, Proactive Linter, Security Scan) yang dirangkum menjadi satu modul komponen untuk mematuhi batas ukuran baris.
+4. **Offline Pr Draft**: Fitur luring yang tersambung ke `agentTaskQueue`.
+
+## Aturan Arsitektur
+- Harus mengikuti batasan `< 125 lines` (seperti yang dilakukan pada dekomposisi `AgentModals`).
+- Antarmuka berfokus pada eksekusi perintah tunggal (Single Execution Goal), menghindari penumpukan status riwayat chat (chat list/bubbles).
+- *Strict Type Checking*.
+
+## Ruang Improvement
+- Menambah kapabilitas eksekusi multithreading di sisi klien menggunakan Web Worker jika agen memproses konteks repositori masif (contoh >1000 berkas).

@@ -1,8 +1,16 @@
-# AI Agent Task Queue Module
+# Modul: Agent Task Queue & Offline Worker
 
-Modul **Task Queue** (`modules/agentTaskQueue`) mengelola tumpukan pekerjaan latar belakang (*background tasks*) otonom yang dijalankan asisten AI:
+## Deskripsi
+Modul manajemen antrean latar belakang (background queueing) yang memungkinkan agen AI menjalankan tugas berat (seperti audit OSV atau refactoring massal) secara asinkron tanpa memblokir thread UI. Dilengkapi dengan dukungan Luring (Offline Worker).
 
-## Fitur Utama
-1. **Queue Prioritisation & Reordering**: Pengguna dapat memprioritaskan tugas penting dengan memindahkan posisinya naik atau turun dalam antrean secara interaktif.
-2. **Execution Flow Control**: Kemampuan memutar (*Play/Resume*), menjeda (*Pause*), atau membatalkan (*Cancel/Kill*) tugas secara langsung.
-3. **Queue Statistics Dashboard**: Ringkasan jumlah tugas aktif berjalan, dijeda, dalam antrean, serta perkiraan durasi pengerjaan.
+## Komponen & Fitur
+1. **Offline Worker**: Antrean tugas khusus yang mencadangkan permintaan jaringan (contoh: pembuatan PR) saat perangkat kehilangan koneksi internet. Saat perangkat online, *worker* akan merehidrasi antrean dan melakukan push.
+2. **OfflineSyncPanel**: UI interaktif untuk memonitor tugas yang tertunda (pending queue) serta kontrol force-sync ke GitHub (Draft PR simulation).
+3. **Task Queue Engine**: Pipa eksekusi asinkron memori lokal dengan prioritas eksekusi (priority queuing).
+
+## Aturan Arsitektur
+- `OfflineWorker` harus selalu memeriksa `navigator.onLine` dan mengandalkan `EventBus` (`core/dispatcher.ts`) untuk berkomunikasi dengan UI, menghindari dependensi siklikal.
+- Storage berbasis Key-Value cache lokal (Local Storage) yang membungkus semua interaksi file I/O dengan blok `try-catch` aman.
+
+## Ruang Improvement
+- Migrasi penyimpanan antrean dari `localStorage` ke `IndexDB` agar dapat mendukung sinkronisasi data yang ukurannya masif (misal diff ratusan file atau base64 gambar).

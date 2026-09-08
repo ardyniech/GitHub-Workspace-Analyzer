@@ -9,3 +9,4 @@ export { commitApi } from './storage/commitApi';
 export type { Repository, RepoContentItem } from './storage/api';
 export type { CommitItem, CommitDetail, CommitFileChange } from './storage/commitApi';
 export type { RefactorProposal, RefactorChange } from './logic/aiRefactorTypes';
+export { FileTreeManager } from './primitives/FileTreeManager';

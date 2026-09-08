@@ -52,4 +52,5 @@ export const repoApi = {
   fetchContents: fileApi.fetchContents,
   fetchFileContent: fileApi.fetchFileContent,
   commitFile: fileApi.commitFile,
+  deleteFile: fileApi.deleteFile,
 };

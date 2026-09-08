@@ -1,6 +1,6 @@
 {
-  "name": "GitHub Workspace Analyzer",
-  "description": "Sebuah aplikasi bento dashboard modern untuk mengeksplorasi repositori GitHub, mengelola issue, dan melakukan analisis mendalam menggunakan asisten AI berbasis Gemini.",
+  "name": "AI Agent Dev-Center & GitHub Analyzer",
+  "description": "Platform analitik dan manajemen repositori GitHub bertenaga AI Agent. Dilengkapi dengan PR Pre-Flight Fix-It, OSV Audit, Memory Fragmentation Diagnostics, Offline Sync Worker, dan arsitektur cellular modular yang kokoh.",
   "requestFramePermissions": [
     "microphone"
   ],

@@ -28,6 +28,7 @@ export const MODULES_REGISTRY = {
   agentTaskQueue: { name: 'Agent Task Queue Dashboard Module', version: '1.0.0' },
   repoVisualizer: { name: 'Real-Time Repository Visualizer Module', version: '1.0.0' },
   prPreFlight: { name: 'AI PR Pre-Flight Audit Module', version: '1.0.0' },
+  deployAutomation: { name: 'Deploy Automation & Live Preview Module', version: '1.0.0' },
 };
 
 export function loadAllModules() {

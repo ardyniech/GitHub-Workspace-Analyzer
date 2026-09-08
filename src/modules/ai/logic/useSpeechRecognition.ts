@@ -40,6 +40,10 @@ export function useSpeechRecognition(onResult?: (transcript: string) => void) {
       };
 
       recognition.onerror = (event: any) => {
+        if (event.error === 'aborted') {
+          setIsListening(false);
+          return;
+        }
         console.error(`[Module:AI] Error in SpeechRecognition: ${event.error}`);
         if (event.error === 'not-allowed') {
           setError('Izin mikrofon tidak diberikan.');

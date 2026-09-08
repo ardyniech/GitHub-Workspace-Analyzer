@@ -33,4 +33,17 @@ export const peerReviewApi = {
       filesChanged: metaData.changed_files || 1,
     };
   },
+  
+  async postPrComment(repoFullName: string, prNumber: number, body: string, token: string): Promise<any> {
+    const res = await fetch(`${CONFIG.GITHUB_API}/repos/${repoFullName}/issues/${prNumber}/comments`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `token ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ body }),
+    });
+    if (!res.ok) throw new Error('Gagal mengirim ulasan ke Pull Request.');
+    return res.json();
+  },
 };

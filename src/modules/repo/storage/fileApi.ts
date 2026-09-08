@@ -9,11 +9,7 @@ export interface RepoContentItem {
 }
 
 const safeAtob = (str: string): string => {
-  try {
-    return decodeURIComponent(escape(atob(str.replace(/\s/g, ''))));
-  } catch {
-    return atob(str);
-  }
+  try { return decodeURIComponent(escape(atob(str.replace(/\s/g, '')))); } catch { return atob(str); }
 };
 
 const safeBtoa = (str: string): string => {
@@ -24,11 +20,9 @@ export const fileApi = {
   async fetchContents(fullName: string, path: string = '', token?: string | null): Promise<RepoContentItem[]> {
     const headers: HeadersInit = {};
     if (token) headers['Authorization'] = `token ${token}`;
-
     const url = path
       ? `${CONFIG.GITHUB_API}/repos/${fullName}/contents/${path}`
       : `${CONFIG.GITHUB_API}/repos/${fullName}/contents`;
-
     const res = await fetch(url, { headers });
     if (!res.ok) throw new Error(`Gagal memuat isi direktori: ${path || 'root'}`);
     const data = await res.json();
@@ -39,11 +33,13 @@ export const fileApi = {
     });
   },
 
-  async fetchFileContent(fullName: string, path: string, token?: string | null): Promise<{ content: string; sha: string }> {
+  async fetchFileContent(fullName: string, path: string, token?: string | null, branch?: string): Promise<{ content: string; sha: string }> {
     const headers: HeadersInit = {};
     if (token) headers['Authorization'] = `token ${token}`;
-
-    const res = await fetch(`${CONFIG.GITHUB_API}/repos/${fullName}/contents/${path}`, { headers });
+    const url = branch 
+      ? `${CONFIG.GITHUB_API}/repos/${fullName}/contents/${path}?ref=${branch}` 
+      : `${CONFIG.GITHUB_API}/repos/${fullName}/contents/${path}`;
+    const res = await fetch(url, { headers });
     if (!res.ok) {
       if (res.status === 404) return { content: '', sha: '' };
       throw new Error(`Gagal membaca berkas: ${path}`);
@@ -58,11 +54,13 @@ export const fileApi = {
     content: string,
     commitMessage: string,
     token: string,
-    sha?: string
+    sha?: string,
+    branch?: string
   ): Promise<any> {
     const body: any = { message: commitMessage, content: safeBtoa(content) };
     if (sha) body.sha = sha;
-
+    if (branch) body.branch = branch;
+    
     const res = await fetch(`${CONFIG.GITHUB_API}/repos/${fullName}/contents/${path}`, {
       method: 'PUT',
       headers: {
@@ -71,10 +69,35 @@ export const fileApi = {
       },
       body: JSON.stringify(body),
     });
-
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.message || `Gagal commit berkas ke ${path}`);
+    }
+    return res.json();
+  },
+
+  async deleteFile(
+    fullName: string,
+    path: string,
+    commitMessage: string,
+    token: string,
+    sha: string,
+    branch?: string
+  ): Promise<any> {
+    const body: any = { message: commitMessage, sha };
+    if (branch) body.branch = branch;
+    
+    const res = await fetch(`${CONFIG.GITHUB_API}/repos/${fullName}/contents/${path}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `token ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `Gagal menghapus berkas ${path}`);
     }
     return res.json();
   },

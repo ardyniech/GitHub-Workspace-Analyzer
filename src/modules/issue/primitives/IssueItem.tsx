@@ -69,15 +69,32 @@ export function IssueItem({ issue, repoFullName }: IssueItemProps) {
         </div>
 
         {/* Kolom Komentar & Analisis Sentimen */}
-        <SentimentBadge
-          commentCount={commentCount}
-          mood={analysis?.dominantMood}
-          label={analysis?.label}
-          emoji={analysis?.emoji}
-          loading={loading}
-          isOpen={isExpanded}
-          onClick={toggleExpand}
-        />
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              import('../../../core/dispatcher').then(({ dispatcher }) => {
+                dispatcher.emit('ai:send_prompt', {
+                  prompt: `Tolong analisis dan perbaiki issue #${issue.number}: ${issue.title}\n\nDeskripsi:\n${issue.body || 'Tidak ada deskripsi'}\n\nBerikan perbaikan kode secara lengkap dan buat Pull Request.`,
+                  isFixPr: true
+                });
+                dispatcher.emit('notify:push', { type: 'success', title: 'Agen Dipanggil', message: `Agen AI mulai memperbaiki Issue #${issue.number}` });
+              });
+            }}
+            className="text-[10px] bg-purple-100 text-purple-700 font-bold px-2 py-1 rounded hover:bg-purple-200 transition-colors"
+          >
+            Auto-Fix
+          </button>
+          <SentimentBadge
+            commentCount={commentCount}
+            mood={analysis?.dominantMood}
+            label={analysis?.label}
+            emoji={analysis?.emoji}
+            loading={loading}
+            isOpen={isExpanded}
+            onClick={toggleExpand}
+          />
+        </div>
       </div>
 
       {/* Expanded Sentiment Summary & Discussion Breakdown */}

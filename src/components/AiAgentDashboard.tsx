@@ -65,6 +65,7 @@ export function AiAgentDashboard({ repoFullName }: AiAgentDashboardProps) {
 
       {/* Grid Bento Cards */}
       <DashboardGrid
+        repoFullName={repoFullName}
         visNodesLength={visState.nodes.length}
         pfScore={pfState.score}
         pfStatus={pfState.status}

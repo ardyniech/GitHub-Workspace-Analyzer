@@ -1,9 +1,15 @@
-# AI PR Pre-Flight Audit Module
+# Modul: PR Pre-Flight
 
-Modul **AI PR Pre-Flight** (`modules/prPreFlight`) menyediakan asisten otonom tingkat tinggi yang mensimulasikan proses peer-review ketat dari *Senior Engineer* sebelum perubahan komit didorong (*push*) ke repositori produksi:
+## Deskripsi
+Modul ini bertindak sebagai gerbang (gatekeeper) analisis pra-komit (pre-flight). AI akan melakukan simulasi audit terhadap perubahan kode yang direncanakan sebelum dipush ke GitHub. 
 
-## Fitur Utama
-1. **Commit Scanning**: Menganalisis berkas-berkas yang terubah pada komit lokal aktif secara komprehensif.
-2. **Strict Senior Audits**: Memeriksa bug logika, kebocoran token sensitif, unhandled async exceptions, serta pelanggaran arsitektur LEGO-Cellular.
-3. **Interactive Score & Verdict**: Menyediakan skor kelulusan audit (0-100) serta status tegas "Passed" atau "Blocked".
-4. **Auto-Fix Integration**: Tombol perbaikan satu-klik untuk langsung membenahi pelanggaran standar produksi.
+## Komponen & Fitur
+1. **Fix-It Engine**: Menganalisis judul/pesan komit terhadap "SOP Zero Mistake" dan aturan arsitektur, mendeteksi konflik, dan mengeluarkan rekomendasi sintaks perbaikan otomatis (autofix) langsung di timeline riwayat komit.
+2. **PreFlightModal**: Antarmuka bagi pengguna untuk memicu simulasi audit arsitektur sebelum mengeksekusi komit sesungguhnya.
+
+## Aturan Arsitektur
+- Logika audit (`logic/fixItEngine.ts`) berjalan terpisah dari komponen React (`primitives/`), menjaga UI tetap responsif.
+- Payload konflik diringkas dan diberi kategori (Critical, High, Medium, Low) agar informasinya user-friendly dan bukan hanya stack trace mentah.
+
+## Ruang Improvement
+- Menghubungkan Fix-It Engine langsung ke editor kode sehingga `proposedFix` dapat langsung di-*apply* dengan satu klik (One-Click Auto Fix).
