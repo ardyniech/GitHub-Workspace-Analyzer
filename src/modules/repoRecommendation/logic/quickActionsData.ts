@@ -1,0 +1,58 @@
+import { QuickActionItem } from './types';
+
+export const BASE_QUICK_ACTIONS: QuickActionItem[] = [
+  {
+    id: 'quick-security',
+    label: 'Hardening Keamanan',
+    sublabel: 'Audit token & celah manifes',
+    category: 'security',
+    iconName: 'ShieldAlert',
+    prompt: 'Lakukan audit keamanan ketat pada seluruh berkas konfigurasi, package.json, dan cegah kebocoran token kredensial.',
+    colorClass: 'text-rose-700 bg-rose-50 border-rose-200 hover:bg-rose-100',
+  },
+  {
+    id: 'quick-cicd',
+    label: 'Setup CI/CD Pipeline',
+    sublabel: 'GitHub Actions build & lint',
+    category: 'cicd',
+    iconName: 'Workflow',
+    prompt: 'Buat berkas workflow GitHub Actions .github/workflows/ci.yml untuk otomatisasi typecheck tsc dan build produksi.',
+    colorClass: 'text-indigo-700 bg-indigo-50 border-indigo-200 hover:bg-indigo-100',
+  },
+  {
+    id: 'quick-testing',
+    label: 'Generate Unit Tests',
+    sublabel: 'Test suite logic mandiri',
+    category: 'testing',
+    iconName: 'FlaskConical',
+    prompt: 'Tulis unit test otomatis menggunakan framework testing murni untuk seluruh fungsi kalkulasi dan storage.',
+    colorClass: 'text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100',
+  },
+  {
+    id: 'quick-refactor',
+    label: 'Modular Refactoring',
+    sublabel: 'Pecah file ke <125 baris',
+    category: 'architecture',
+    iconName: 'Split',
+    prompt: 'Audit seluruh berkas proyek dan dekomposisi logika menjadi sub-komponen terisolasi agar patuh batas <125 baris.',
+    colorClass: 'text-amber-700 bg-amber-50 border-amber-200 hover:bg-amber-100',
+  },
+  {
+    id: 'quick-docs',
+    label: 'Human-Friendly Docs',
+    sublabel: 'README & API guides',
+    category: 'documentation',
+    iconName: 'BookOpen',
+    prompt: 'Perbarui README dan dokumentasi modul tanpa jargon teknis rumit agar ramah untuk developer dan pengguna.',
+    colorClass: 'text-sky-700 bg-sky-50 border-sky-200 hover:bg-sky-100',
+  },
+  {
+    id: 'quick-perf',
+    label: 'Optimasi Performa',
+    sublabel: 'Cache & bundle slimming',
+    category: 'performance',
+    iconName: 'Zap',
+    prompt: 'Optimalkan bundle client, tree-shaking, dan bersihkan unused imports/dependencies.',
+    colorClass: 'text-purple-700 bg-purple-50 border-purple-200 hover:bg-purple-100',
+  },
+];

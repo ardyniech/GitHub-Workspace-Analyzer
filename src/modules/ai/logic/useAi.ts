@@ -76,10 +76,16 @@ export function useAi(repoFullName: string | undefined, repoDescription: string 
   };
 
   useEffect(() => {
-    const unsub = dispatcher.on('ai:send_prompt', (data: { prompt: string; isFixPr?: boolean }) => {
+    const unsubPrompt = dispatcher.on('ai:send_prompt', (data: { prompt: string; isFixPr?: boolean }) => {
       if (data?.prompt) sendMessage(data.prompt, '', !!data.isFixPr);
     });
-    return () => unsub();
+    const unsubExec = dispatcher.on('ai:executeCommand', (data: { prompt: string }) => {
+      if (data?.prompt) sendMessage(data.prompt, '', false);
+    });
+    return () => {
+      unsubPrompt();
+      unsubExec();
+    };
   }, [repoFullName, repoDescription, token]);
 
   return {

@@ -7,6 +7,7 @@ import { PreFlightModal } from '../modules/prPreFlight';
 import { localCacheManager } from '../shared/utils/localCache';
 import { DashboardGrid } from './DashboardGrid';
 import { OfflineSyncPanel } from './OfflineSyncPanel';
+import { RepoRecommendationWidget } from '../modules/repoRecommendation';
 
 interface AiAgentDashboardProps {
   repoFullName: string;
@@ -62,6 +63,9 @@ export function AiAgentDashboard({ repoFullName }: AiAgentDashboardProps) {
           </div>
         </div>
       </div>
+
+      {/* AI Repo Recommendation & Quick Actions */}
+      <RepoRecommendationWidget repoFullName={repoFullName} />
 
       {/* Grid Bento Cards */}
       <DashboardGrid
