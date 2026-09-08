@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import { generateAiContentWithFallback } from './geminiService';
 import { gitRouter } from './gitRouter';
+import { refactorRouter } from './refactorRouter';
 
 export const apiRouter = Router();
 
 apiRouter.use('/git', gitRouter);
+apiRouter.use('/refactor', refactorRouter);
 
 const SYSTEM_INSTRUCTION =
   'You are an elite GitHub repository AI development agent, security auditor, testing engineer, and senior software architect. ' +

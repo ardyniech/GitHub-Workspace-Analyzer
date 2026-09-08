@@ -1,72 +1,94 @@
-import { RefactorProposal } from './aiRefactorTypes';
-import { buildAgentMemoryContext, autoRecordRepoProgress } from '../../memory';
+import { RefactorProposal, FileCandidate } from './aiRefactorTypes';
+import { refactorApi } from '../storage/refactorApi';
+import { autoRecordRepoProgress } from '../../memory';
 import { devConsoleLogger } from '../../devConsole';
 import { dispatcher } from '../../../core/dispatcher';
 
+export async function fetchRefactorCandidates(): Promise<FileCandidate[]> {
+  return refactorApi.fetchCandidates();
+}
+
+export async function generateRealRefactorProposal(options: {
+  repoFullName: string;
+  filePath?: string;
+  goal?: string;
+  commitMessage?: string;
+}): Promise<RefactorProposal> {
+  const { repoFullName, goal = 'modularitas & strict typing', commitMessage } = options;
+  let targetPath = options.filePath;
+
+  devConsoleLogger.addLog('reasoning', 'AIRefactorEngine', `Memindai berkas target refaktor untuk ${repoFullName}...`);
+
+  if (!targetPath) {
+    const candidates = await refactorApi.fetchCandidates();
+    targetPath = candidates[0]?.path || 'src/components/AppHeader.tsx';
+  }
+
+  devConsoleLogger.addLog('reasoning', 'AIRefactorEngine', `Menganalisis kode riil ${targetPath} dengan AI Engine...`);
+  
+  const proposal = await refactorApi.analyze({
+    filePath: targetPath,
+    goal,
+    commitContext: commitMessage,
+    repoFullName,
+  });
+
+  devConsoleLogger.addLog('info', 'AIRefactorEngine', `Proposal riil dihasilkan untuk ${targetPath}: ${proposal.title}`);
+  return proposal;
+}
+
+// Backwards-compatible synchronous wrapper
 export function generateRefactorProposal(repoFullName: string, commitMessage?: string): RefactorProposal {
-  const memoryContext = buildAgentMemoryContext(repoFullName);
-  devConsoleLogger.addLog('reasoning', 'AIRefactorEngine', `Analisis memori agent & standar koding untuk refactoring ${repoFullName}...`);
-
-  const mockOriginal = `// Legacy monolithic component
-export function OldComponent(props: any) {
-  const [data, setData] = React.useState(null);
-  React.useEffect(() => {
-    fetch('/api/data').then(r => r.json()).then(d => setData(d));
-  }, []);
-  return <div>{data ? data.name : 'Loading...'}</div>;
-}`;
-
-  const mockRefactored = `// Refactored: Strict typing, cellular primitive, error handling
-interface DataProps { name: string }
-
-export function RefactoredComponent({ name }: DataProps) {
-  if (!name) return <div className="text-zinc-400">Loading...</div>;
-  return <div className="font-semibold text-zinc-900">{name}</div>;
-}`;
-
   return {
     id: `refactor-${Date.now()}`,
     repoFullName,
+    targetFile: 'src/components/AppHeader.tsx',
     commitContext: commitMessage || 'Peningkatan struktur berkas & efisiensi modul',
-    title: 'Proposal Refactoring Logika & Pembaruan Dependensi',
-    summary: 'Restrukturisasi komponen monolitik menjadi sub-primitif selular, penerapakan strict interface typing, serta pembaruan dependensi keamanan.',
+    title: 'Proposal Refactoring Otonom & Kepatuhan SOP',
+    summary: 'Restrukturisasi berkas ke standar modular cellular, pengetatan tipe interface, dan batas baris <125 baris.',
     appliedMemories: [
       'SOP Zero Mistake Protocol: Batas file <125 baris & strict type safety',
-      'Universal Modular Architecture: Isolasi modul & komunikasi via core/dispatcher',
-      memoryContext ? 'Konstruksi konteks memori aktif repositori' : 'Konteks memori standar',
+      'Universal Modular Architecture: Isolasi modul via core/dispatcher',
+      'Resilient Error Handling: [Module:<Nama>] log format',
     ],
-    changes: [
-      {
-        fileName: 'src/modules/core/primitives/DataView.tsx',
-        originalCode: mockOriginal,
-        refactoredCode: mockRefactored,
-        reason: 'Restrukturisasi dari tipe Implicit Any ke Strict Interface Props + Fail-safe rendering.',
-      },
-    ],
-    dependencyUpdates: [
-      { name: 'lucide-react', currentVersion: '^0.290.0', proposedVersion: '^0.400.0' },
-      { name: 'typescript', currentVersion: '^5.0.0', proposedVersion: '^5.4.0' },
-    ],
+    changes: [],
+    dependencyUpdates: [],
     status: 'proposed',
   };
 }
 
 export async function applyRefactorProposal(proposal: RefactorProposal): Promise<boolean> {
-  devConsoleLogger.addLog('info', 'AIRefactorEngine', `Menerapkan proposal refactoring [${proposal.id}] pada ${proposal.repoFullName}...`);
+  devConsoleLogger.addLog('info', 'AIRefactorEngine', `Menerapkan refaktor riil [${proposal.id}] pada ${proposal.repoFullName}...`);
 
-  // Record into persistent agent memory
+  if (proposal.changes.length === 0) {
+    throw new Error('Tidak ada perubahan kode yang dapat diterapkan.');
+  }
+
+  const change = proposal.changes[0];
+  const commitMsg = `refactor: ${proposal.title} (${change.fileName})`;
+  const res = await refactorApi.apply(change.fileName, change.refactoredCode, commitMsg);
+
   autoRecordRepoProgress(
     proposal.repoFullName,
     `AI Refactor Executed: ${proposal.title}`,
-    `Perubahan diterapkan pada ${proposal.changes.length} berkas dengan pembaruan dependensi.`
+    `Perubahan diterapkan pada ${change.fileName} (${res.lines} baris). Hash: ${res.commitHash}`
   );
 
-  // Dispatch global event for commit update and UI notification
+  proposal.appliedCommitHash = res.commitHash;
+  proposal.status = 'applied';
+
   dispatcher.emit('repo:commit_pushed', {
     repoFullName: proposal.repoFullName,
-    message: `refactor: ${proposal.title} (AI Refactored)`,
+    message: commitMsg,
+  });
+  dispatcher.emit('git:status_updated');
+  dispatcher.emit('timeMachine:refresh');
+  dispatcher.emit('notify:push', {
+    type: 'success',
+    title: 'AI Refactor Berhasil Diterapkan',
+    message: `${change.fileName} berhasil diperbarui ke disk & dicatat di Git (${res.commitHash}).`,
   });
 
-  devConsoleLogger.addLog('reasoning', 'AIRefactorEngine', `Refactoring sukses. Memori & commit history telah diperbarui.`);
+  devConsoleLogger.addLog('reasoning', 'AIRefactorEngine', `Refactoring sukses riil: ${change.fileName} diperbarui.`);
   return true;
 }

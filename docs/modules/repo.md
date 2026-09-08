@@ -1,8 +1,13 @@
-# Repo Module
+# Repo Module & AI Refactor Engine
 
-Modul untuk mencari, mengulas, dan memilih repositori GitHub.
+Modul untuk mencari, mengulas, memilih repositori GitHub, serta merefaktor berkas kode riil secara otonom dan non-gimmick.
 
-## Fitur
-- Pencarian berdasarkan username GitHub publik.
-- Sinkronisasi repositori privat apabila token terhubung.
+## Fitur Utama
+- Pencarian dan pemilihan repositori GitHub (publik & privat dengan PAT).
 - Pengambilan detail deskripsi dan berkas `README.md` secara asinkron.
+- **Real AI Refactor Engine**:
+  - Pemindaian berkas kandidat riil berdasarkan batas baris SOP (<125 baris) dan kompleksitas.
+  - Analisis AST & dekomposisi modular bertenaga Gemini AI dengan *fallback deterministic transformer*.
+  - Penulisan langsung ke berkas (`fs.writeFileSync`) dan pembuatan *commit* Git riil otomatis.
+  - Integrasi visualisasi metrik (baris sebelum vs sesudah) dan audit aturan memori SOP.
+

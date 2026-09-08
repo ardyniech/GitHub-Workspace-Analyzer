@@ -8,16 +8,17 @@ import { localCacheManager } from '../shared/utils/localCache';
 import { DashboardGrid } from './DashboardGrid';
 import { OfflineSyncPanel } from './OfflineSyncPanel';
 import { RepoRecommendationWidget } from '../modules/repoRecommendation';
+import { AiRefactorModal, generateRefactorProposal } from '../modules/repo';
 
 interface AiAgentDashboardProps {
   repoFullName: string;
 }
 
 export function AiAgentDashboard({ repoFullName }: AiAgentDashboardProps) {
-  const { state: visState, triggerMockRefactor } = useVisualizer();
+  const { state: visState } = useVisualizer();
   const { state: pfState, triggerAudit, isRunning } = usePreFlight();
   
-  const [activeModal, setActiveModal] = useState<'vis' | 'pf' | null>(null);
+  const [activeModal, setActiveModal] = useState<'vis' | 'pf' | 'refactor' | null>(null);
   const [cacheCleared, setCacheCleared] = useState(false);
 
   const handleClearCache = () => {
@@ -77,7 +78,7 @@ export function AiAgentDashboard({ repoFullName }: AiAgentDashboardProps) {
         getStatusIcon={getStatusIcon}
         onOpenVis={() => setActiveModal('vis')}
         onOpenPf={() => setActiveModal('pf')}
-        onTriggerRefactor={triggerMockRefactor}
+        onTriggerRefactor={() => setActiveModal('refactor')}
         onTriggerAudit={triggerAudit}
       />
 
@@ -87,6 +88,12 @@ export function AiAgentDashboard({ repoFullName }: AiAgentDashboardProps) {
       {/* Active Modals */}
       {activeModal === 'vis' && <VisualizerModal onClose={() => setActiveModal(null)} />}
       {activeModal === 'pf' && <PreFlightModal onClose={() => setActiveModal(null)} />}
+      {activeModal === 'refactor' && (
+        <AiRefactorModal
+          proposal={generateRefactorProposal(repoFullName)}
+          onClose={() => setActiveModal(null)}
+        />
+      )}
     </div>
   );
 }
